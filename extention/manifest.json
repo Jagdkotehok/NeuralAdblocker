@@ -1,0 +1,42 @@
+{
+  "manifest_version": 2,
+
+  "name": "Extention template",
+  "description": "TEXT",
+  "version": "0.1",
+
+  "content_security_policy": "script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; object-src 'self'",
+
+  "browser_action": {
+    "default_icon": {
+      "24": "img/24.png",
+      "128": "img/128.png"
+    }
+  },
+  "icons": {
+    "64": "img/64.png"
+  },
+  "permissions": [
+    "http://*/",
+    "https://*/",
+    "contextMenus",
+    "tabs",
+    "webNavigation",
+    "alarms",
+    "webRequest",
+    "webRequestBlocking"
+  ],
+
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/watch*"],
+      "css": [
+        "css/core.css"
+      ],
+      "js": [
+        "js/jquery.min.js",
+        "js/core.js"],
+      "run_at": "document_end"
+    }
+  ]
+}
