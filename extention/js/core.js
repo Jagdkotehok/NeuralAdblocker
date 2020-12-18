@@ -7,6 +7,11 @@ $(document).ready(function() {
 		url: "http://localhost:8080/get?v=" + videoId,
 		dataType: "json"
 	}).done(function (msg) {
-		console.log(msg);
+		var result = [];
+		for(var subtitle in msg['subtitles']){
+			var now = msg['subtitles'][subtitle];
+			result.push([parseFloat(now['start']), parseFloat(now['dur'])]);
+		}
+		console.log(result);
 	});
 });

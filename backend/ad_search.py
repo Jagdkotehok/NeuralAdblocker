@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 
 youtubeUrl = 'https://www.youtube.com/watch?v='
 timedtextVar = 'var ytInitialPlayerResponse = '
+ads_list = ['подарок', 'чайник']
 
 
 class AdSearch:
@@ -15,7 +16,10 @@ class AdSearch:
 	Поля класса:
 	videoUrl -- абсолютная ссылка на видео.
 	timedtextUrl -- абсолютная ссылка на субтитры.
+	videoplaybackUrl -- абсолютная ссылка на перемотку видео, не работает :(
 	timedtext -- субтитры в виде: [start, duration, text].
+	ads -- список рекламы в виде: [start, duration, text].
+	ads_json -- ads в виде JSON
 	
 	Ошибки класса:
 	ValueError('No input video') -- отсутсвует ссылка на видео.
@@ -29,9 +33,11 @@ class AdSearch:
 	
 	def find(self):
 		"""Ищет рекламу на видео."""
-		self.timedtextUrl = self.parse_html()
+		self.parse_html()
 		self.timedtext = self.parse_xml()
-		return str(self.timedtext)
+		self.ads = self.get_ads()
+		self.ads_json = self.ads_to_json()
+		return self.ads_json
 	
 	
 	def parse_html(self):
@@ -45,7 +51,8 @@ class AdSearch:
 				result = script.string
 		json_text = result.replace(timedtextVar, '').replace(';', '')
 		data = json.loads(json_text)
-		return data['captions']['playerCaptionsTracklistRenderer']['captionTracks'][0]['baseUrl']
+		self.timedtextUrl = data['captions']['playerCaptionsTracklistRenderer']['captionTracks'][0]['baseUrl']
+		self.videoplaybackUrl = data['streamingData']['adaptiveFormats'][3]['url'] + '&range=6600978-6666513'
 	
 	
 	def parse_xml(self):
@@ -56,5 +63,24 @@ class AdSearch:
 		result = []
 		for subtitle in data['transcript']['text']:
 			result.append([ subtitle['@start'], subtitle['@dur'], subtitle['#text'] ])
+		return result
+	
+	
+	def get_ads(self):
+		"""Получает рекламу из субтитров."""
+		result = []
+		for subtitle in self.timedtext:
+			for ad_word in ads_list:
+				if ad_word in subtitle[2]:
+					result.append([subtitle[0], subtitle[1]])
+					break
+		return result
+	
+	
+	def ads_to_json(self):
+		"""Преобразует внутреннее представление в JSON."""
+		result = {'subtitles' : []}
+		for subtitle in self.ads:
+			result['subtitles'].append({'start' : subtitle[0], 'dur' : subtitle[1]})
 		return result
 
