@@ -16,7 +16,6 @@ class AdSearch:
 	Поля класса:
 	videoUrl -- абсолютная ссылка на видео.
 	timedtextUrl -- абсолютная ссылка на субтитры.
-	videoplaybackUrl -- абсолютная ссылка на перемотку видео, не работает :(
 	timedtext -- субтитры в виде: [start, duration, text].
 	ads -- список рекламы в виде: [start, duration, text].
 	ads_json -- ads в виде JSON
@@ -33,7 +32,7 @@ class AdSearch:
 	
 	def find(self):
 		"""Ищет рекламу на видео."""
-		self.parse_html()
+		self.timedtextUrl = self.parse_html()
 		self.timedtext = self.parse_xml()
 		self.ads = self.get_ads()
 		self.ads_json = self.ads_to_json()
@@ -51,8 +50,7 @@ class AdSearch:
 				result = script.string
 		json_text = result.replace(timedtextVar, '').replace(';', '')
 		data = json.loads(json_text)
-		self.timedtextUrl = data['captions']['playerCaptionsTracklistRenderer']['captionTracks'][0]['baseUrl']
-		self.videoplaybackUrl = data['streamingData']['adaptiveFormats'][3]['url'] + '&range=6600978-6666513'
+		return data['captions']['playerCaptionsTracklistRenderer']['captionTracks'][0]['baseUrl']
 	
 	
 	def parse_xml(self):
