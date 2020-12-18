@@ -1,5 +1,6 @@
 import requests
 import json
+import xmltodict
 from bs4 import BeautifulSoup
 
 
@@ -30,7 +31,7 @@ class AdSearch:
 		"""Ищет рекламу на видео."""
 		self.timedtextUrl = self.parse_html()
 		self.timedtext = self.parse_xml()
-		return self.timedtext
+		return str(self.timedtext)
 	
 	
 	def parse_html(self):
@@ -50,5 +51,10 @@ class AdSearch:
 	def parse_xml(self):
 		"""Приводит субтитры в нужный вид."""
 		r = requests.get(self.timedtextUrl)
-		return r.text
+		data = xmltodict.parse(r.text)
+		data = json.loads(json.dumps(data))
+		result = []
+		for subtitle in data['transcript']['text']:
+			result.append([ subtitle['@start'], subtitle['@dur'], subtitle['#text'] ])
+		return result
 

@@ -17,8 +17,6 @@ def index():
 @cross_origin()
 def get():
     search = AdSearch(request.args.get('v', None))
-    print(AdSearch.__doc__)
-    print(AdSearch.__init__.__doc__)
     return search.find()
 
 
