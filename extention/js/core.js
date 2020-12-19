@@ -10,7 +10,7 @@ $(document).ready(function() {
 		var result = [];
 		for(var subtitle in msg['subtitles']){
 			var now = msg['subtitles'][subtitle];
-			result.push([parseFloat(now['start']), parseFloat(now['dur'])]);
+			result.push([now['start'], now['dur']]);
 		}
 		console.log(result);
 		var element = document.getElementsByClassName("video-stream html5-main-video")[0];

@@ -60,19 +60,34 @@ class AdSearch:
 		data = json.loads(json.dumps(data))
 		result = []
 		for subtitle in data['transcript']['text']:
-			result.append([ subtitle['@start'], subtitle['@dur'], subtitle['#text'] ])
+			result.append([ float(subtitle['@start']), float(subtitle['@dur']), subtitle['#text'] ])
 		return result
 	
 	
 	def get_ads(self):
 		"""Получает рекламу из субтитров."""
 		result = []
+		last = False
 		for subtitle in self.timedtext:
-			for ad_word in ads_list:
-				if ad_word in subtitle[2]:
-					result.append([subtitle[0], subtitle[1]])
-					break
+			if self.check_subtitle(subtitle[2]):
+				if last:
+					start = min(result[-1][0], subtitle[0])
+					finish = max(result[-1][0] + result[-1][1], subtitle[0] + subtitle[1])
+					result[-1] = [start, finish - start]
+				else:
+					 result.append([subtitle[0], subtitle[1]])
+					 last = True
+			else:
+				last = False
 		return result
+	
+	
+	def check_subtitle(self, text):
+		"""Проверяет один субтитр на рекламу."""
+		for ad_word in ads_list:
+			if ad_word in text:
+				return True
+		return False
 	
 	
 	def ads_to_json(self):
