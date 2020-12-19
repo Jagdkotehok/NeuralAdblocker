@@ -1,4 +1,22 @@
 $(document).ready(function() {
+	setTimeout(function(){
+		var x = document.getElementsByTagName("ytd-macro-markers-list-item-renderer");
+		if (typeof(x) !== "undefined"){
+			var yy = [];
+			var zz = [];
+			for (var i = 0; i < x.length / 2; ++i) {
+				var y = x[i].getElementsByClassName("style-scope ytd-macro-markers-list-item-renderer")[5].textContent;
+				var z = x[i].getElementsByClassName("style-scope ytd-macro-markers-list-item-renderer")[6].textContent;
+				yy.push(y);
+				var time = z.split(":");
+				zz.push(parseInt(time[0]) * 60 * 1000 + parseInt(time[1]) * 10);
+			}
+			console.log(yy);
+			console.log(zz);
+			// query to server with ?text=yy[i] -> result.[push / unpush](zz[i])
+		}
+		
+	}, 2000);
 	var time_out = 15 * 60 * 1000;
 	var paramsString = document.location.search;
 	var searchParams = new URLSearchParams(paramsString);

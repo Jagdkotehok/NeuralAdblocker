@@ -27,7 +27,7 @@ class AdSearch:
 		"""Создаёт объект для поиска рекламы по короткой ссылке видео."""
 		if videoUrl is None:
 			raise ValueError('No input video')
-		self.videoUrl = youtubeUrl+ videoUrl
+		self.videoUrl = youtubeUrl + videoUrl
 	
 	
 	def find(self):
@@ -48,7 +48,7 @@ class AdSearch:
 		for script in scripts:
 			if script.string is not None and timedtextVar in script.string:
 				result = script.string
-		json_text = result.replace(timedtextVar, '').replace(';', '')
+		json_text = result.replace(timedtextVar, '').replace(';', '')	
 		data = json.loads(json_text)
 		return data['captions']['playerCaptionsTracklistRenderer']['captionTracks'][0]['baseUrl']
 	
@@ -96,4 +96,3 @@ class AdSearch:
 		for subtitle in self.ads:
 			result['subtitles'].append({'start' : subtitle[0], 'dur' : subtitle[1]})
 		return result
-
