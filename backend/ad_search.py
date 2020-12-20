@@ -2,11 +2,14 @@ import requests
 import json
 import xmltodict
 from bs4 import BeautifulSoup
+from neuro_search import NeuroSearch
 
 
 youtubeUrl = 'https://www.youtube.com/watch?v='
 timedtextVar = 'var ytInitialPlayerResponse = '
 ads_list = ['подарок', 'чайник']
+neuroSearch = NeuroSearch()
+neuroSearch.load()
 
 
 class AdSearch:
@@ -18,7 +21,7 @@ class AdSearch:
 	timedtextUrl -- абсолютная ссылка на субтитры.
 	timedtext -- субтитры в виде: [start, duration, text].
 	ads -- список рекламы в виде: [start, duration, text].
-	ads_json -- ads в виде JSON
+	ads_json -- ads в виде JSON.
 	
 	Ошибки класса:
 	ValueError('No input video') -- отсутсвует ссылка на видео.
@@ -48,7 +51,7 @@ class AdSearch:
 		for script in scripts:
 			if script.string is not None and timedtextVar in script.string:
 				result = script.string
-		json_text = result.replace(timedtextVar, '').replace(';', '')	
+		json_text = result.replace(timedtextVar, '').replace(';', '')
 		data = json.loads(json_text)
 		return data['captions']['playerCaptionsTracklistRenderer']['captionTracks'][0]['baseUrl']
 	
