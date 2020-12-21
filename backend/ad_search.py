@@ -72,8 +72,11 @@ class AdSearch:
 		"""Получает рекламу из субтитров."""
 		result = []
 		last = False
-		for subtitle in self.timedtext:		# окно
-			if self.check_subtitle(subtitle[2]):
+		subtitles = [neuroSearch.preprocess_dataset(subtitle[2]) for subtitle in self.timedtext]
+		subtitles = neuroSearch.process_dataset(subtitles)
+		for index in range(len(self.timedtext)):	# окно
+			subtitle = self.timedtext[index]
+			if self.check_subtitle(subtitles[index]):
 				if last:
 					start = min(result[-1][0], subtitle[0])
 					finish = max(result[-1][0] + result[-1][1], subtitle[0] + subtitle[1])
@@ -88,10 +91,7 @@ class AdSearch:
 	
 	def check_subtitle(self, text):	# окно
 		"""Проверяет один субтитр на рекламу."""
-		for ad_word in ads_list:
-			if ad_word in text:
-				return True
-		return False
+		return neuroSearch.predict(text)
 	
 	
 	def ads_to_json(self):

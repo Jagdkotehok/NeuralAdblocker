@@ -1,13 +1,13 @@
-// HIHIHIH
-//d g  fg g
-
+var result = [];
+var parts = [];
+var INF = 1000000000;
 $(document).ready(function() {
 	setTimeout(function(){
 		var x = document.getElementsByTagName("ytd-macro-markers-list-item-renderer");
 		if (typeof(x) !== "undefined"){
 			var yy = [];
 			var zz = [];
-			for (var i = 0; i < x.length / 2; ++i) {
+			for (var i = 0; i < x.length; ++i) {
 				var y = x[i].getElementsByClassName("style-scope ytd-macro-markers-list-item-renderer")[5].textContent;
 				var z = x[i].getElementsByClassName("style-scope ytd-macro-markers-list-item-renderer")[6].textContent;
 				yy.push(y);
@@ -16,7 +16,28 @@ $(document).ready(function() {
 			}
 			console.log(yy);
 			console.log(zz);
-			// query to server with ?text=yy[i] -> result.[push / unpush](zz[i])
+			zz.push(INF);
+			/*for(var __index = 0; __index < yy.length; ++__index){
+				setTimeout(() => {
+					$.ajax({
+						url: "http://localhost:8080/ad?text=" + yy[__index],
+						dataType: "json"
+					}).done(function (msg) {
+						console.log('Answer for ' + __index);
+						var ans = msg['subtitle']
+						if(ans === 1) parts.push([zz[__index] / 1000, (zz[__index + 1] - zz[__index]) / 1000]);
+					});
+				}, 10 * 1000 * (__index + 1));
+			}*/
+			setTimeout(() => {
+				$.ajax({
+					url: "http://localhost:8080/ad?text=" + yy[6],
+					dataType: "json"
+				}).done(function (msg) {
+					var ans = msg['subtitle']
+					if(ans === 1) parts.push([zz[6] / 1000, (zz[6 + 1] - zz[6]) / 1000]);
+				});
+			}, 10 * 1000);
 		}
 
 	}, 2000);
@@ -28,7 +49,6 @@ $(document).ready(function() {
 		url: "http://localhost:8080/get?v=" + videoId,
 		dataType: "json"
 	}).done(function (msg) {
-		var result = [];
 		for(var subtitle in msg['subtitles']){
 			var now = msg['subtitles'][subtitle];
 			result.push([now['start'], now['dur']]);
@@ -36,6 +56,11 @@ $(document).ready(function() {
 		console.log(result);
 		var element = document.getElementsByClassName("video-stream html5-main-video")[0];
 		let timerId = setInterval(function(){
+			for(var index in parts){
+				var subtitle = parts[index];
+				var now_time = element.currentTime;
+				if(subtitle[0] <= now_time && now_time < subtitle[0] + subtitle[1]) element.currentTime = subtitle[0] + subtitle[1];
+			}
 			for(var index in result){
 				var subtitle = result[index];
 				var now_time = element.currentTime;
@@ -48,3 +73,7 @@ $(document).ready(function() {
 		}, time_out);
 	});
 });
+setTimeout(function(){
+	console.log(parts);
+	console.log(result);
+}, 60 * 1000);

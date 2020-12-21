@@ -117,3 +117,16 @@ class NeuroSearch:
 		print("Accuracy {:.3f}".format(skm.accuracy_score(labels, predictions)))
 		print("Precision {:.3f}".format(skm.precision_score(labels, predictions)))
 		print("Recall {:.3f}".format(skm.recall_score(labels, predictions)))
+	
+	
+	def predict(self, text):
+		text = self.vectorizer.transform([text])
+		return self.clf.predict_proba(text)[0][1] >= 0.7	# это реклама?
+	
+	
+	def predict_with_parse(self, text):
+		text = self.preprocess_dataset(text)
+		text = self.process_dataset([text])
+		text = self.vectorizer.transform(text)
+		return self.clf.predict_proba(text)[0][1] >= 0.7	# это реклама?
+
