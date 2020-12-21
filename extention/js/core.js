@@ -1,3 +1,6 @@
+// HIHIHIH
+//d g  fg g
+
 $(document).ready(function() {
 	setTimeout(function(){
 		var x = document.getElementsByTagName("ytd-macro-markers-list-item-renderer");
@@ -15,7 +18,7 @@ $(document).ready(function() {
 			console.log(zz);
 			// query to server with ?text=yy[i] -> result.[push / unpush](zz[i])
 		}
-		
+
 	}, 2000);
 	var time_out = 15 * 60 * 1000;
 	var paramsString = document.location.search;

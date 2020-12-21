@@ -10,6 +10,7 @@ timedtextVar = 'var ytInitialPlayerResponse = '
 ads_list = ['подарок', 'чайник']
 neuroSearch = NeuroSearch()
 neuroSearch.load()
+neuroSearch.evaluate()
 
 
 class AdSearch:
@@ -71,7 +72,7 @@ class AdSearch:
 		"""Получает рекламу из субтитров."""
 		result = []
 		last = False
-		for subtitle in self.timedtext:
+		for subtitle in self.timedtext:		# окно
 			if self.check_subtitle(subtitle[2]):
 				if last:
 					start = min(result[-1][0], subtitle[0])
@@ -85,7 +86,7 @@ class AdSearch:
 		return result
 	
 	
-	def check_subtitle(self, text):
+	def check_subtitle(self, text):	# окно
 		"""Проверяет один субтитр на рекламу."""
 		for ad_word in ads_list:
 			if ad_word in text:
