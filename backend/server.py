@@ -33,5 +33,13 @@ def ad():
 	return {'subtitle' : res}
 
 
+@app.route('/evaluate')
+@cross_origin()
+def evaluate():
+	search = AdSearch('')
+	search.evaluate_ranges()
+	return {'' : ''}
+
+
 if __name__ == '__main__':
 	app.run(host='0.0.0.0', port=8080)

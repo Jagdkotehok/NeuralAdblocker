@@ -3,6 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 import sklearn.metrics as skm
+from scipy.sparse import vstack
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 import nltk
@@ -17,8 +18,8 @@ stop_words = set(stopwords.words('russian'))
 parsing = {}
 m = Mystem()
 tokenizer = RegexpTokenizer(r'[а-яА-Я]+')
-d = 5		# размер окна
-c = 0.7		# коэффициент рекламы
+window_length = 15		# размер окна
+ad_coefficient = 0.7	# коэффициент рекламы
 
 
 class NeuroSearch:
@@ -33,6 +34,7 @@ class NeuroSearch:
 	y_train -- тренировочные ответы.
 	x_test -- тестовые данные.
 	y_test -- тестовые ответы.
+	clf -- работающая нейросеть.
 	"""
 	def  __init__(self):
 		"""Конструктор."""
@@ -43,43 +45,92 @@ class NeuroSearch:
 		"""Загрузка модели."""
 		data = self.load_result()
 		self.x_data = self.vectorizer.fit_transform(data[0])
+		# self.x_data = self.normilize_data(data[0])
 		self.y_data = data[1]
 		self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x_data, self.y_data, test_size=0.33, random_state=42)
 		start = time.time()
 		self.clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(2, 2), random_state=100).fit(self.x_train, self.y_train)
-		print("Time : " + str(time.time() - start))
 		# self.clf = LogisticRegression(random_state=42, max_iter=1000, class_weight='balanced').fit(self.x_train, self.y_train)
+		print('Time : ' + str(time.time() - start))
+
+
+	def normilize_data(self, data):
+		"""Нормализирует данные -> не используется."""
+		w = self.vectorizer.fit_transform(data)
+		new_count = []
+		for i in range(len(data)):
+			new_count.append(w[i] / len(data[i].split(' ')))
+		return vstack(new_count)
 
 
 	def load_result(self):
 		""""Загрузка готовых данных."""
-		files = glob.glob("./ans/*.txt")
+		files = glob.glob('./ans/*.txt')
 		data = [[], []]
 		for now in files:
-			print(now)
+			print('Load : ' + now)
 			res = ParseTrain(now).parse_result()
 			if res == None:
 				continue
 			data[0].append(res[0])
 			data[1].append(res[1])
-		return self.create_window(data)
+		print('Loaded ' + str(len(files)) + ' files')
+		return self.large_window(data)
 
 
 	def create_window(self, data):
-		"""Создание окна."""
+		"""Создание окна фиксированной длины -> не используется."""
 		ans = [[], []]
 		for index in range(len(data[0])):
 			x = data[0][index]
 			y = data[1][index]
-			for i in range(len(x) - d + 1):
-				text = ""
+			for i in range(len(x) - window_length + 1):
+				text = ''
 				sum = 0
-				for j in range(d):
-					text += x[i + j] + " "
+				for j in range(window_length):
+					text += x[i + j] + ' '
 					sum += y[i + j]
 				ans[0].append(text)
-				ans[1].append(1 * (sum / d >= 0.5))
+				ans[1].append(1 * (sum / window_length >= 0.5))
 		return ans
+
+
+	def large_window(self, data):
+		"""Создание окна на всём отрезке."""
+		ans = [[], []]
+		for index in range(len(data[0])):
+			x = data[0][index]
+			y = data[1][index]
+			i = 0
+			while i < len(y):
+				start = i
+				text = ''
+				while i < len(y):
+					if y[i] == y[start]:
+						text += x[i] + ' '
+						i += 1
+					else:
+						break
+				ans[0].append(text)
+				ans[1].append(y[start])
+		return ans
+
+
+	def large_window2(self, data):
+		"""Создание окна на всём отрезке -> не используется."""
+		x_data = data[0]
+		y_data = data[1]
+		l_now = 0
+		r_now = 0
+		for i in range(0, len(x_data)):
+			sum = 0
+			for j in range(i, len(y_data)):
+				sum += y[j]
+				if r_now - l_now < j - i + 1 and sum / (j - i + 1) >= ad_coefficient:
+					l_now = i
+					r_now = j
+		return (l_now, r_now)
+
 
 	def load_data_set(self):
 		"""Загрузка данных для разбиения."""
@@ -136,17 +187,20 @@ class NeuroSearch:
 		"""Качество модели."""
 		predictions = self.clf.predict(self.x_test)
 		labels = self.y_test
-		print("Accuracy {:.3f}".format(skm.accuracy_score(labels, predictions)))
-		print("Precision {:.3f}".format(skm.precision_score(labels, predictions)))
-		print("Recall {:.3f}".format(skm.recall_score(labels, predictions)))
+		print('Evaluation:')
+		print('Accuracy : {:.3f}'.format(skm.accuracy_score(labels, predictions)))
+		print('Precision : {:.3f}'.format(skm.precision_score(labels, predictions)))
+		print('Recall : {:.3f}'.format(skm.recall_score(labels, predictions)))
 
 
 	def predict(self, text):
+		"""Предсказание по готовым данным."""
 		text = self.vectorizer.transform([text])
-		return self.clf.predict_proba(text)[0][1] >= c	# это реклама?
+		return self.clf.predict_proba(text)[0][1] >= ad_coefficient	# это реклама?
 
 
 	def predict_with_parse(self, text):
+		"""Предсказание по не обработанным данным."""
 		text = self.preprocess_dataset(text)
 		text = self.process_dataset([text])
 		text = self.vectorizer.transform(text)

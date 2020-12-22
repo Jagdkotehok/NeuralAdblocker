@@ -3,7 +3,9 @@ import json
 import xmltodict
 from bs4 import BeautifulSoup
 from neuro_search import NeuroSearch
-from neuro_search import d
+from neuro_search import window_length
+import glob
+from parse_train import ParseTrain
 
 
 youtubeUrl = 'https://www.youtube.com/watch?v='
@@ -69,13 +71,14 @@ class AdSearch:
 		return result
 
 
-	def create_window(self, subtitles): # [start, dur, text]
+	def create_window(self, subtitles):
+		"""Создает окно."""
 		result = []
-		for i in range(len(subtitles) - d + 1):
+		for i in range(len(subtitles) - window_length + 1):
 			start = subtitles[i][0]
-			finish = subtitles[i + d - 1][0] + subtitles[i + d - 1][1]
+			finish = subtitles[i + window_length - 1][0] + subtitles[i + window_length - 1][1]
 			text = ''
-			for j in range(d):
+			for j in range(window_length):
 				text += subtitles[i + j][2] + ' '
 			result.append([start, finish - start, text])
 		return result
@@ -84,10 +87,11 @@ class AdSearch:
 	def get_ads(self):
 		"""Получает рекламу из субтитров."""
 		result = []
+		ans = []
 		last = False
 		subtitles = [neuroSearch.preprocess_dataset(subtitle[2]) for subtitle in self.timedtext]
 		subtitles = neuroSearch.process_dataset(subtitles)
-		for index in range(len(self.timedtext)):	# окно
+		for index in range(len(self.timedtext)):
 			subtitle = self.timedtext[index]
 			if self.check_subtitle(subtitles[index]):
 				if last:
@@ -99,10 +103,24 @@ class AdSearch:
 					 last = True
 			else:
 				last = False
-		return result
+		i = 0
+		while i < len(result):
+			l_now = result[i][0]
+			r_now = result[i][1]
+			for j in range(i, len(ans)):
+				l_video = result[j][0]
+				r_video = result[j][1]
+				if l_now <= l_video and l_video <= r_now:
+					r_now = r_video
+					i = j
+				else:
+					break
+			ans.append([l_now, r_now])
+			i += 1
+		return ans
 
 
-	def check_subtitle(self, text):	# окно
+	def check_subtitle(self, text):
 		"""Проверяет один субтитр на рекламу."""
 		return neuroSearch.predict(text)
 
@@ -113,3 +131,52 @@ class AdSearch:
 		for subtitle in self.ads:
 			result['subtitles'].append({'start' : subtitle[0], 'dur' : subtitle[1]})
 		return result
+
+
+	def evaluate_ranges(self):
+		"""Качество модели для всех файлов."""
+		files = glob.glob('./res/*.xml')
+		for file in files[0:1]:
+			train = ParseTrain(file)
+			ans_true = train.parse_ranges()
+			search = AdSearch(train.get_video_url())
+			search.find()
+			ans_our = search.ads
+			self.evaluate_answers(ans_our, ans_true)
+
+
+	def evaluate_answers(self, ans_our, ans_true):
+		"""Качество модели для одного файла."""
+		print('True answer : ' + str(ans_true))
+		print('Our answer : ' + str(ans_our))
+		intersection = 0
+		len_true = 0
+		len_our = 0
+		len_intersection = 0
+		l_true = 0
+		r_true = 0
+		for i in range(len(ans_true)):
+			len_true += ans_true[i][1]
+		for i in range(len(ans_our)):
+			len_our += ans_our[i][1]
+		for i in range(len(ans_true)):
+			l_true = ans_true[i][0]
+			r_true = l_true + ans_true[i][1]
+		for j in range(len(ans_our)):
+			l_now = ans_our[j][0]
+			r_now  = l_now + ans_our[j][1]
+			if (l_now <= l_true and l_true <= r_now):
+				len_intersection += min(r_now, r_true) - l_true
+			elif (l_now <= r_true and r_true <= r_now):
+				len_intersection += r_true - l_now
+			elif (l_true <= l_now and r_now <= r_true):
+				len_intersection += r_now - l_now
+		intersection = 1
+		accuracy = 1
+		if len_true:
+			intersection = len_intersection / len_true
+		if len_our:
+			accuracy = len_true / len_our
+		res = [accuracy, intersection, 2 * accuracy * intersection / (accuracy + intersection)]
+		print('Result : ' + str(res))
+		return res
