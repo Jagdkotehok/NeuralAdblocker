@@ -26,10 +26,10 @@ def get():
 @cross_origin()
 def ad():
 	res = neuroSearch.predict_with_parse(request.args.get('text', None))
-	if res:
-		res = 1
-	else:
-		res = 0
+	#if res:
+	#	res = 1
+	#else:
+	#	res = 0
 	return {'subtitle' : res}
 
 

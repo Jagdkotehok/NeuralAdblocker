@@ -59,12 +59,18 @@ $(document).ready(function() {
 			for(var index in parts){
 				var subtitle = parts[index];
 				var now_time = element.currentTime;
-				if(subtitle[0] <= now_time && now_time < subtitle[0] + subtitle[1]) element.currentTime = subtitle[0] + subtitle[1];
+				if(subtitle[0] <= now_time && now_time < subtitle[0] + subtitle[1]){
+					element.currentTime = subtitle[0] + subtitle[1];
+					console.log("-> 1 " + now_time);
+				}
 			}
 			for(var index in result){
 				var subtitle = result[index];
 				var now_time = element.currentTime;
-				if(subtitle[0] <= now_time && now_time < subtitle[0] + subtitle[1]) element.currentTime = subtitle[0] + subtitle[1];
+				if(subtitle[0] <= now_time && now_time < subtitle[0] + subtitle[1]){
+					element.currentTime = subtitle[0] + subtitle[1];
+					console.log("-> 2 " + now_time);
+				}
 			}
 		}, 10);
 		setTimeout(function(){

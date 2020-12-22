@@ -3,6 +3,7 @@ import json
 import xmltodict
 from bs4 import BeautifulSoup
 from neuro_search import NeuroSearch
+from neuro_search import d
 
 
 youtubeUrl = 'https://www.youtube.com/watch?v='
@@ -16,14 +17,14 @@ neuroSearch.evaluate()
 class AdSearch:
 	"""
 	Класс ищет рекламу в субтитрах.
-	
+
 	Поля класса:
 	videoUrl -- абсолютная ссылка на видео.
 	timedtextUrl -- абсолютная ссылка на субтитры.
 	timedtext -- субтитры в виде: [start, duration, text].
 	ads -- список рекламы в виде: [start, duration, text].
 	ads_json -- ads в виде JSON.
-	
+
 	Ошибки класса:
 	ValueError('No input video') -- отсутсвует ссылка на видео.
 	"""
@@ -32,17 +33,17 @@ class AdSearch:
 		if videoUrl is None:
 			raise ValueError('No input video')
 		self.videoUrl = youtubeUrl + videoUrl
-	
-	
+
+
 	def find(self):
 		"""Ищет рекламу на видео."""
 		self.timedtextUrl = self.parse_html()
-		self.timedtext = self.parse_xml()
+		self.timedtext = self.create_window(self.parse_xml())
 		self.ads = self.get_ads()
 		self.ads_json = self.ads_to_json()
 		return self.ads_json
-	
-	
+
+
 	def parse_html(self):
 		"""Получает субтитры из html страницы."""
 		r = requests.get(self.videoUrl)
@@ -55,8 +56,8 @@ class AdSearch:
 		json_text = result.replace(timedtextVar, '').replace(';', '')
 		data = json.loads(json_text)
 		return data['captions']['playerCaptionsTracklistRenderer']['captionTracks'][0]['baseUrl']
-	
-	
+
+
 	def parse_xml(self):
 		"""Приводит субтитры в нужный вид."""
 		r = requests.get(self.timedtextUrl)
@@ -66,8 +67,20 @@ class AdSearch:
 		for subtitle in data['transcript']['text']:
 			result.append([ float(subtitle['@start']), float(subtitle['@dur']), subtitle['#text'] ])
 		return result
-	
-	
+
+
+	def create_window(self, subtitles): # [start, dur, text]
+		result = []
+		for i in range(len(subtitles) - d + 1):
+			start = subtitles[i][0]
+			finish = subtitles[i + d - 1][0] + subtitles[i + d - 1][1]
+			text = ''
+			for j in range(d):
+				text += subtitles[i + j][2] + ' '
+			result.append([start, finish - start, text])
+		return result
+
+
 	def get_ads(self):
 		"""Получает рекламу из субтитров."""
 		result = []
@@ -87,13 +100,13 @@ class AdSearch:
 			else:
 				last = False
 		return result
-	
-	
+
+
 	def check_subtitle(self, text):	# окно
 		"""Проверяет один субтитр на рекламу."""
 		return neuroSearch.predict(text)
-	
-	
+
+
 	def ads_to_json(self):
 		"""Преобразует внутреннее представление в JSON."""
 		result = {'subtitles' : []}
