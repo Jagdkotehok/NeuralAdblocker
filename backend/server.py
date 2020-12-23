@@ -25,11 +25,16 @@ def get():
 @app.route('/ad')
 @cross_origin()
 def ad():
-	res = neuroSearch.predict_with_parse(request.args.get('text', None))
-	#if res:
-	#	res = 1
-	#else:
-	#	res = 0
+	text = request.args.get('text', None)
+	res = 0
+	if text == 'Рекламная пауза':
+		res = 1
+	else:
+		res = neuroSearch.predict_with_parse(text)
+		#if res:
+		#	res = 1
+		#else:
+		#	res = 0
 	return {'subtitle' : res}
 
 

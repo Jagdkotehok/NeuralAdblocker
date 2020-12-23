@@ -2,6 +2,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
+from gensim.models import word2vec
+import numpy as np
 import sklearn.metrics as skm
 from scipy.sparse import vstack
 from nltk.corpus import stopwords
@@ -11,6 +13,42 @@ from pymystem3 import Mystem
 import glob
 from parse_train import ParseTrain
 import time
+
+
+"""
+
+
+classifier = trainLogReg(transform_text([' '.join(x) for x in X_data]), Y_data)
+
+evaluate(classifier, transform_text([' '.join(x) for x in X_data]), Y_data)
+
+def process_text(text):
+    ''' trains w2v model on given texts'''
+    ''' list of strings, where string - full text'''
+    text_list = [x.split(' ') for x in text]
+    new_words = []
+    for cur_text in text_list:
+        ok = 1
+        for word in cur_text:
+            if word not in cur_model:
+                ok = 0
+        if not ok:
+            new_words.append(cur_text)
+    #print(new_words)
+    #print(len(cur_model.wv.vocab))
+    cur_model.build_vocab(new_words, update=True)
+    cur_model.train(new_words, total_examples=len(new_words), epochs=10)
+    #print(len(cur_model.wv.vocab))
+
+def predict_text(text):
+    '''string'''
+    reforged_text = transform_text([text])
+    print(reforged_text)
+    result = classifier.predict(reforged_text)
+    return result[0]
+    '''0 or 1'''
+"""
+
 
 
 nltk.download('stopwords')
@@ -41,16 +79,59 @@ class NeuroSearch:
 		self.vectorizer = CountVectorizer()
 
 
+	"""Word to vector:"""
+	def transform_text(self, data):
+		''' list of strings '''
+		result = []
+		for text in data:
+			now = [self.w2v_model.wv[token] for token in text.split(' ') if token in self.w2v_model.wv]
+			if len(now) == 0:
+				result.append(np.array([0] * 100))
+			else:
+				result.append(np.mean(now, axis=0))
+		return result
+		# return [np.mean([self.w2v_model.wv[token] for token in text.split(' ') if token in self.w2v_model.wv], axis=0) for text in data]
+
+
+	def train_w2v(self, data):
+		return word2vec.Word2Vec(data, workers=4, size=100, min_count=2, window=4, sample=1e-3)
+
+
+	def predict_text(self, text):
+		reforged_text = transform_text([text])
+		print(reforged_text)
+		result = classifier.predict(reforged_text)
+		return result[0]
+	"""End."""
+
+
 	def load(self):
 		"""Загрузка модели."""
 		data = self.load_result()
+		self.data = data
+		x = data[0]
+		y = data[1]
+		# self.w2v_model = word2vec.Word2Vec(data[0], workers=4, size=100, min_count=2, window=4, sample=1e-3)
+		# self.w2v_model = self.train_w2v(x)
+		# xxx = self.transform_text([' '.join(xx) for xx in x])
+		# print(type(xxx))
+		# print(len(xxx))
+		# print(type(xxx[0]))
+		# self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(xxx, y, test_size=0.33, random_state=42)
+		# print(type(self.x_train))
+		# print(len(self.x_train))
+		# for train in self.x_train:
+		#	print(len(train))
+		# print(type(self.y_train))
+		# print(len(self.y_train))
+		# print(type(self.y_train[0]))
+		# self.clf_log = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(20, 2), random_state=100).fit(self.x_train, self.y_train)
 		self.x_data = self.vectorizer.fit_transform(data[0])
 		# self.x_data = self.normilize_data(data[0])
 		self.y_data = data[1]
 		self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x_data, self.y_data, test_size=0.33, random_state=42)
 		start = time.time()
 		self.clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(2, 2), random_state=100).fit(self.x_train, self.y_train)
-		# self.clf = LogisticRegression(random_state=42, max_iter=1000, class_weight='balanced').fit(self.x_train, self.y_train)
 		print('Time : ' + str(time.time() - start))
 
 
@@ -191,6 +272,16 @@ class NeuroSearch:
 		print('Accuracy : {:.3f}'.format(skm.accuracy_score(labels, predictions)))
 		print('Precision : {:.3f}'.format(skm.precision_score(labels, predictions)))
 		print('Recall : {:.3f}'.format(skm.recall_score(labels, predictions)))
+		# print(self.data[0])
+		# print(self.data[0][0])
+		# predictions = self.transform_text([' '.join(x) for x in self.data[0]])
+		# print(len(predictions[0]))
+		# print(len(self.clf_log.coef_[0]))
+		# predictions = self.clf_log.predict(predictions)
+		# print('Evaluation2:')
+		# print('Accuracy : {:.3f}'.format(skm.accuracy_score(self.data[1], predictions)))
+		# print('Precision : {:.3f}'.format(skm.precision_score(self.data[1], predictions)))
+		# print('Recall : {:.3f}'.format(skm.recall_score(self.data[1], predictions)))
 
 
 	def predict(self, text):
