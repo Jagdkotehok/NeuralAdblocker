@@ -1,3 +1,9 @@
 Flask
 requests
 flask-cors
+xmltodict
+bs4
+sklearn
+gensim
+nltk
+pymystem3
